@@ -18,6 +18,7 @@ specific language governing permissions and limitations under the License. */
 #include <stdio.h>
 #include <time.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 #include "types.h"
 
 #define SPI_BITS_PER_WORD 8

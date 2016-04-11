@@ -19,6 +19,8 @@ static u8 spi_data_tx[((1 << 16) / 3) * 4 + 5];
 static u32 spi_speed_hz = SPI_DEFAULT_SPEED_HZ;
 
 const char* logFileName = "logs/tcl_server.log";
+static int frameCount = 0;
+#define FRAME_COUNT_INTERVAL_OUT (36000)
 
 void tcl_put_pixels(int fd, u8 spi_data_tx[], u16 count, pixel* pixels) {
   int i;
@@ -43,8 +45,11 @@ void tcl_put_pixels(int fd, u8 spi_data_tx[], u16 count, pixel* pixels) {
 
 
 void handler(u8 address, u16 count, pixel* pixels) {
-  fprintf(stderr, "%d ", count);
-  fflush(stderr);
+  frameCount++;
+  if (frameCount % FRAME_COUNT_INTERVAL_OUT == 0) {
+    LOG_INFO << "Frames output: " << frameCount;
+    frameCount = 0;
+  }
   tcl_put_pixels(spi_fd, spi_data_tx, count, pixels);
 }
 
@@ -62,14 +67,14 @@ int main(int argc, char** argv) {
   time_t t;
 
   get_speed_and_port(&spi_speed_hz, &port, argc, argv);
-  spi_fd = init_spidev("/dev/spidev2.0", spi_speed_hz);
+  spi_fd = init_spidev("/dev/spidev1.0", spi_speed_hz);
   if (spi_fd < 0) {
     return 1;
   }
-  fprintf(stderr, "SPI speed: %.2f MHz, ready...\n", spi_speed_hz*1e-6);
+  LOG_INFO << "SPI speed: " << spi_speed_hz*1e-6 << " MHz, ready...";
   opc_source s = opc_new_source(port);
   while (s >= 0 && opc_receive(s, handler, TIMEOUT_MS));
-  fprintf(stderr, "Exiting after %d ms of inactivity\n", TIMEOUT_MS);
+  LOG_INFO << "Exiting after " << TIMEOUT_MS << " ms of inactivity";
 
   t = time(NULL);
   diagnostic_pixel.r = (t % 3 == 0) ? 64 : 0;

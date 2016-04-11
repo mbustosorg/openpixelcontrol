@@ -19,6 +19,7 @@ specific language governing permissions and limitations under the License. */
 #include <arpa/inet.h>
 #include <unistd.h>
 #include "opc.h"
+#include <plog/Log.h>
 
 /* Internal structure for a source.  sock >= 0 iff the connection is open. */
 typedef struct {
@@ -46,12 +47,12 @@ int opc_listen(u16 port) {
   address.sin_port = htons(port);
   bzero(&address.sin_addr, sizeof(address.sin_addr));
   if (bind(sock, (struct sockaddr*) &address, sizeof(address)) != 0) {
-    fprintf(stderr, "OPC: Could not bind to port %d: ", port);
+    LOG_ERROR << "OPC: Could not bind to port " << port;
     perror(NULL);
     return -1;
   }
   if (listen(sock, 0) != 0) {
-    fprintf(stderr, "OPC: Could not listen on port %d: ", port);
+    LOG_ERROR << "OPC: Could not listen on port " << port;
     perror(NULL);
     return -1;
   }
@@ -63,7 +64,7 @@ opc_source opc_new_source(u16 port) {
 
   /* Allocate an opc_source_info entry. */
   if (opc_next_source >= OPC_MAX_SOURCES) {
-    fprintf(stderr, "OPC: No more sources available\n");
+    LOG_ERROR << "OPC: No more sources available";
     return -1;
   }
   info = &opc_sources[opc_next_source];
@@ -76,7 +77,7 @@ opc_source opc_new_source(u16 port) {
   }
 
   /* Increment opc_next_source only if we were successful. */
-  fprintf(stderr, "OPC: Listening on port %d\n", port);
+  LOG_INFO << "OPC: Listening on port " << port;
   return opc_next_source++;
 }
 
@@ -92,7 +93,7 @@ u8 opc_receive(opc_source source, opc_handler* handler, u32 timeout_ms) {
   char buffer[64];
 
   if (source < 0 || source >= opc_next_source) {
-    fprintf(stderr, "OPC: Source %d does not exist\n", source);
+    LOG_WARNING << "OPC: Source " << source << " does not exist";
     return 0;
   }
 
@@ -113,7 +114,7 @@ u8 opc_receive(opc_source source, opc_handler* handler, u32 timeout_ms) {
     info->sock = accept(
         info->listen_sock, (struct sockaddr*) &(address), &address_len);
     inet_ntop(AF_INET, &(address.sin_addr), buffer, 64);
-    fprintf(stderr, "OPC: Client connected from %s\n", buffer);
+    LOG_INFO << "OPC: Client connected from " << buffer;
     close(info->listen_sock);
     info->listen_sock = -1;
     info->header_length = 0;
@@ -147,7 +148,7 @@ u8 opc_receive(opc_source source, opc_handler* handler, u32 timeout_ms) {
     }
     if (received <= 0) {
       /* Connection was closed; wait for more connections. */
-      fprintf(stderr, "OPC: Client closed connection\n");
+      LOG_INFO << "OPC: Client closed connection";
       close(info->sock);
       info->sock = -1;
       info->listen_sock = opc_listen(info->port);
@@ -162,12 +163,12 @@ u8 opc_receive(opc_source source, opc_handler* handler, u32 timeout_ms) {
 void opc_reset_source(opc_source source) {
   opc_source_info* info = &opc_sources[source];
   if (source < 0 || source >= opc_next_source) {
-    fprintf(stderr, "OPC: Source %d does not exist\n", source);
+    LOG_WARNING << "OPC: Source " << source << " does not exist";
     return;
   }
 
   if (info->sock >= 0) {
-    fprintf(stderr, "OPC: Closed connection\n");
+    LOG_WARNING << "OPC: Closed connection";
     close(info->sock);
     info->sock = -1;
     info->listen_sock = opc_listen(info->port);

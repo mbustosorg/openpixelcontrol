@@ -10,7 +10,8 @@ CONDITIONS OF ANY KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations under the License. */
 
 #include "spi.h"
-
+#include <plog/Log.h>
+#include <cstdlib>
 
 void get_speed_and_port(u32* speed, u16* port, int argc, char** argv) {
   if (argc > 1 && speed) {
@@ -31,7 +32,7 @@ void spi_transfer(int fd, u32 spi_speed_hz, u8* tx, u8* rx, u32 len, u16 delay) 
   transfer.speed_hz = spi_speed_hz;
   transfer.bits_per_word = SPI_BITS_PER_WORD;
   if (ioctl(fd, SPI_IOC_MESSAGE(1), &transfer) < len) {
-    fprintf(stderr, "Write failed\n");
+    LOG_ERROR << "Write failed";
   }
 }
 
@@ -42,7 +43,7 @@ void spi_write(int fd, u8* tx, u32 len) {
   while (len) {
     block = len > SPI_MAX_WRITE ? SPI_MAX_WRITE : len;
     if (write(fd, tx, block) < block) {
-      fprintf(stderr, "Write failed\n");
+      LOG_ERROR << "Write failed";
     }
     tx += block;
     len -= block;
@@ -59,7 +60,7 @@ int init_spidev(char dev[], u32 spi_speed_hz) {
 
   fd = open(dev, O_RDWR);
   if (fd < 0) {
-    fprintf(stderr, "Failed to open device %s\n", dev);
+    LOG_ERROR << "Failed to open device " << dev;
     return -1;
   }
   if (ioctl(fd, SPI_IOC_WR_MODE, &mode) >= 0 &&
@@ -71,6 +72,6 @@ int init_spidev(char dev[], u32 spi_speed_hz) {
     return fd;
   }
   close(fd);
-  fprintf(stderr, "Failed to set SPI parameters\n");
+  LOG_ERROR << "Failed to set SPI parameters";
   return -1;
 }

@@ -22,9 +22,9 @@ bin/dummy_server: src/dummy_server.c src/opc_server.c
 	mkdir -p bin
 	gcc ${CFLAGS} -o $@ $^
 
-bin/tcl_server: src/tcl_server.c src/opc_server.c src/spi.c
+bin/tcl_server: src/tcl_server.cpp src/opc_server.cpp src/spi.cpp
 	mkdir -p bin
-	gcc ${CFLAGS} -o $@ $^
+	g++ ${CFLAGS} -o $@ $^
 
 bin/ws2801_server: src/ws2801_server.c src/opc_server.c src/spi.c
 	mkdir -p bin

@@ -1,0 +1,5 @@
+﻿Date;Time;Severity;TID;This;Function;Message
+2016/04/11;04:48:19.689;INFO;18475;0;main@63;"Logging to -> logs/tcl_server.log"
+2016/04/11;04:48:19.695;INFO;18475;0;main@74;"SPI speed: 8 MHz, ready..."
+2016/04/11;04:48:19.699;INFO;18475;0;opc_new_source@80;"OPC: Listening on port 7890"
+2016/04/11;04:48:20.216;INFO;18475;0;opc_receive@117;"OPC: Client connected from 127.0.0.1"

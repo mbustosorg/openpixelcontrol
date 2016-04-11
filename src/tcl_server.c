@@ -11,11 +11,14 @@ specific language governing permissions and limitations under the License. */
 
 #include "spi.h"
 #include "opc.h"
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
 
 static int spi_fd = -1;
 static u8 spi_data_tx[((1 << 16) / 3) * 4 + 5];
 static u32 spi_speed_hz = SPI_DEFAULT_SPEED_HZ;
 
+const char* logFileName = "logs/tcl_server.log";
 
 void tcl_put_pixels(int fd, u8 spi_data_tx[], u16 count, pixel* pixels) {
   int i;
@@ -47,6 +50,13 @@ void handler(u8 address, u16 count, pixel* pixels) {
 
 
 int main(int argc, char** argv) {
+
+  static plog::RollingFileAppender<plog::CsvFormatter> fileAppender(logFileName, 1000000, 3);
+  static plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+  plog::init(plog::info, &fileAppender).addAppender(&consoleAppender);
+
+  LOG_INFO << "Logging to -> " << logFileName;
+
   u16 port = OPC_DEFAULT_PORT;
   pixel diagnostic_pixel;
   time_t t;

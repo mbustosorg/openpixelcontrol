@@ -1,6 +1,6 @@
 platform=$(shell uname)
 
-CFLAGS=-O2 -g
+CFLAGS=-O2 -g -I./src/plog-1.0.0/include
 ifeq ($(platform),Darwin)
   ALL=bin/dummy_client bin/dummy_server bin/gl_server
   GL_OPTS=-framework OpenGL -framework GLUT -Wno-deprecated-declarations

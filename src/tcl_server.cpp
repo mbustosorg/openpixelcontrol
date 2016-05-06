@@ -75,7 +75,9 @@ int main(int argc, char** argv) {
   opc_source s = opc_new_source(port);
   while (s >= 0) {
     opc_receive(s, handler, TIMEOUT_MS);
-    LOG_INFO << "Timeout, no clients";
+    if (s == 0) {
+      LOG_INFO << "Timeout, no clients";
+    }
   }
 
   t = time(NULL);

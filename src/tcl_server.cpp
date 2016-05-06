@@ -73,8 +73,10 @@ int main(int argc, char** argv) {
   }
   LOG_INFO << "SPI speed: " << spi_speed_hz*1e-6 << " MHz, ready...";
   opc_source s = opc_new_source(port);
-  while (s >= 0 && opc_receive(s, handler, TIMEOUT_MS));
-  LOG_INFO << "Exiting after " << TIMEOUT_MS << " ms of inactivity";
+  while (s >= 0) {
+    opc_receive(s, handler, TIMEOUT_MS);
+    LOG_INFO << "Timeout, no clients";
+  }
 
   t = time(NULL);
   diagnostic_pixel.r = (t % 3 == 0) ? 64 : 0;

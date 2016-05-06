@@ -33,5 +33,8 @@ int main(int argc, char** argv) {
   opc_source s = opc_new_source(port);
   while (s >= 0) {
     opc_receive(s, handler, 10000);
+    if (s == 0) {
+      printf("Timeout, no clients\n");
+    }
   }
 }

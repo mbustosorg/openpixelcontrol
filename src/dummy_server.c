@@ -32,8 +32,8 @@ int main(int argc, char** argv) {
   u16 port = argc > 1 ? atoi(argv[1]) : OPC_DEFAULT_PORT;
   opc_source s = opc_new_source(port);
   while (s >= 0) {
-    opc_receive(s, handler, 10000);
-    if (s == 0) {
+    u8 timeout = opc_receive(s, handler, 10000);
+    if (timeout == 0) {
       printf("Timeout, no clients\n");
     }
   }

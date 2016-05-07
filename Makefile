@@ -18,9 +18,9 @@ bin/dummy_client: src/dummy_client.c src/opc_client.c
 	mkdir -p bin
 	gcc ${CFLAGS} -o $@ $^
 
-bin/dummy_server: src/dummy_server.c src/opc_server.c
+bin/dummy_server: src/dummy_server.c src/opc_server.cpp
 	mkdir -p bin
-	gcc ${CFLAGS} -o $@ $^
+	g++ ${CFLAGS} -o $@ $^
 
 bin/tcl_server: src/tcl_server.cpp src/opc_server.cpp src/spi.cpp
 	mkdir -p bin

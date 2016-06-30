@@ -14,6 +14,7 @@ specific language governing permissions and limitations under the License. */
 #include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 #include <unistd.h>
+#include <math.h>
 
 static int spi_fd = -1;
 static u8 spi_data_tx[((1 << 16) / 3) * 4 + 5];
@@ -44,10 +45,10 @@ void tcl_put_pixels(int fd, u8 spi_data_tx[], u16 count, pixel* pixels) {
     g = gamma_table_green[p->g];
     b = gamma_table_blue[p->b];
     flag = (r & 0xc0) >> 6 | (g & 0xc0) >> 4 | (b & 0xc0) >> 2;
-    *d++ = ~flag;		      *d++ = ~flag;
-    *d++ = p->b;		 +    *d++ = r;
-    *d++ = p->g;		 +    *d++ = g;
-    *d++ = p->r;		 +    *d++ = b;
+    *d++ = ~flag;
+    *d++ = r;
+    *d++ = g;
+    *d++ = b;
   }
   spi_write(fd, spi_data_tx, d - spi_data_tx);
 }
@@ -84,11 +85,27 @@ int main(int argc, char** argv) {
   pixel diagnostic_pixel;
   time_t t;
 
-  get_speed_and_port(&spi_speed_hz, &port, argc, argv);
-  spi_fd = init_spidev("/dev/spidev1.0", spi_speed_hz);
+  //get_speed_and_port(&spi_speed_hz, &port, argc, argv);
+
+  char spiDev[] = "/dev/spidev1.0";
+  spi_fd = init_spidev(spiDev, spi_speed_hz);
   if (spi_fd < 0) {
     return 1;
   }
+
+  /* set gamma correction */
+  int opt = 0;
+  float gammaValue = 1.0;
+  while ((opt = getopt(argc, argv, "g:")) != -1) {
+    switch (opt) {
+    case 'g':
+      gammaValue = atof(optarg);
+      break;
+    }
+  }
+  LOG_INFO << "Gamma correction factor: " << gammaValue;
+  set_gamma(gammaValue, gammaValue, gammaValue);
+  
   LOG_INFO << "SPI speed: " << spi_speed_hz*1e-6 << " MHz, ready...";
   opc_source s = opc_new_source(port);
   while (s >= 0) {
@@ -98,21 +115,6 @@ int main(int argc, char** argv) {
     }
   }
 
-  /* set gamma correction */
-  int opt = 0;
-  char *gammaString = NULL;
-  float gammaValue = 1.0;
-  while ((opt = getopt(argc, argv, "g")) != -1) {
-    switch (opt) {
-    case 'g':
-      gammaString = optarg;
-      gammaValue = atof(gammaString);
-      break;
-    }
-  }
-  LOG_INFO << "Gamma correction factor: " << gammaValue;
-  set_gamma(gammaValue, gammaValue, gammaValue);
-  
   t = time(NULL);
   diagnostic_pixel.r = (t % 3 == 0) ? 64 : 0;
   diagnostic_pixel.g = (t % 3 == 1) ? 64 : 0;

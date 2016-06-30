@@ -1,5 +1,7 @@
 bin/
 
+*.log
+
 # Object files
 *.o
 

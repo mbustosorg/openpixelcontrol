@@ -13,10 +13,15 @@ specific language governing permissions and limitations under the License. */
 #include "opc.h"
 #include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>
+#include <unistd.h>
 
 static int spi_fd = -1;
 static u8 spi_data_tx[((1 << 16) / 3) * 4 + 5];
 static u32 spi_speed_hz = SPI_DEFAULT_SPEED_HZ;
+
+static u8 gamma_table_red[256];
+static u8 gamma_table_green[256];
+static u8 gamma_table_blue[256];
 
 const char* logFileName = "logs/tcl_server.log";
 static int frameCount = 0;
@@ -27,22 +32,35 @@ void tcl_put_pixels(int fd, u8 spi_data_tx[], u16 count, pixel* pixels) {
   pixel* p;
   u8* d;
   u8 flag;
-
+  u8 r, g, b;
+  
   d = spi_data_tx;
   *d++ = 0;
   *d++ = 0;
   *d++ = 0;
   *d++ = 0;
   for (i = 0, p = pixels; i < count; i++, p++) {
-    flag = (p->r & 0xc0) >> 6 | (p->g & 0xc0) >> 4 | (p->b & 0xc0) >> 2;
-    *d++ = ~flag;
-    *d++ = p->b;
-    *d++ = p->g;
-    *d++ = p->r;
+    r = gamma_table_red[p->r];
+    g = gamma_table_green[p->g];
+    b = gamma_table_blue[p->b];
+    flag = (r & 0xc0) >> 6 | (g & 0xc0) >> 4 | (b & 0xc0) >> 2;
+    *d++ = ~flag;		      *d++ = ~flag;
+    *d++ = p->b;		 +    *d++ = r;
+    *d++ = p->g;		 +    *d++ = g;
+    *d++ = p->r;		 +    *d++ = b;
   }
   spi_write(fd, spi_data_tx, d - spi_data_tx);
 }
 
+void set_gamma(double gamma_red, double gamma_green, double gamma_blue) {
+  int i;
+  
+  for (i = 0; i < 256; i++) {
+    gamma_table_red[i] = (uint8_t)(pow(i / 255.0,gamma_red) * 255.0 + 0.5);
+    gamma_table_green[i] = (uint8_t)(pow(i / 255.0,gamma_green) * 255.0 + 0.5);
+    gamma_table_blue[i] = (uint8_t)(pow(i / 255.0,gamma_blue) * 255.0 + 0.5);
+  }
+}
 
 void handler(u8 address, u16 count, pixel* pixels) {
   frameCount++;
@@ -80,6 +98,21 @@ int main(int argc, char** argv) {
     }
   }
 
+  /* set gamma correction */
+  int opt = 0;
+  char *gammaString = NULL;
+  float gammaValue = 1.0;
+  while ((opt = getopt(argc, argv, "g")) != -1) {
+    switch (opt) {
+    case 'g':
+      gammaString = optarg;
+      gammaValue = atof(gammaString);
+      break;
+    }
+  }
+  LOG_INFO << "Gamma correction factor: " << gammaValue;
+  set_gamma(gammaValue, gammaValue, gammaValue);
+  
   t = time(NULL);
   diagnostic_pixel.r = (t % 3 == 0) ? 64 : 0;
   diagnostic_pixel.g = (t % 3 == 1) ? 64 : 0;

@@ -46,9 +46,9 @@ void tcl_put_pixels(int fd, u8 spi_data_tx[], u16 count, pixel* pixels) {
     b = gamma_table_blue[p->b];
     flag = (r & 0xc0) >> 6 | (g & 0xc0) >> 4 | (b & 0xc0) >> 2;
     *d++ = ~flag;
+    *d++ = b;
     *d++ = r;
     *d++ = g;
-    *d++ = b;
   }
   spi_write(fd, spi_data_tx, d - spi_data_tx);
 }

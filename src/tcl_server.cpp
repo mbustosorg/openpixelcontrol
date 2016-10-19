@@ -13,6 +13,8 @@ specific language governing permissions and limitations under the License. */
 #include "opc.h"
 #include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <math.h>
 
@@ -26,7 +28,9 @@ static u8 gamma_table_blue[256];
 
 const char* logFileName = "logs/tcl_server.log";
 static int frameCount = 0;
+auto start = chrono::high_resolution_clock::now();
 #define FRAME_COUNT_INTERVAL_OUT (36000)
+#define FRAME_RATE_INTERVAL_OUT (100)
 
 void tcl_put_pixels(int fd, u8 spi_data_tx[], u16 count, pixel* pixels) {
   int i;
@@ -69,9 +73,20 @@ void handler(u8 address, u16 count, pixel* pixels) {
     LOG_INFO << "Frames output: " << frameCount;
     frameCount = 0;
   }
+  if (frameCount % FRAME_RATE_INTERVAL_OUT == 0) {
+    auto lastStart = start;
+    start = chrono::high_resolution_clock::now()
+    auto elapsed = start - lastStart;
+    long long updateLength = chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+    LOG_DEBUG << "Average Frame Time: " << updateLength / FRAME_RATE_INTERVAL_OUT;
+  }
   tcl_put_pixels(spi_fd, spi_data_tx, count, pixels);
 }
 
+void usage(char* prog_name) {
+  fprintf(stderr, "Usage: %s <options> -s [<speed in Hz>] -p [<port>] -d[<debug level (4 = info)>]\n", prog_name);
+  exit(1);
+}
 
 int main(int argc, char** argv) {
 
@@ -85,7 +100,26 @@ int main(int argc, char** argv) {
   pixel diagnostic_pixel;
   time_t t;
 
-  //get_speed_and_port(&spi_speed_hz, &port, argc, argv);
+  while ((opt = getopt(argc, argv, ":s:p:d:")) != -1)
+  {
+      switch (opt)
+      {
+      case 's':
+	speed = strtol(optarg, NULL, 10);
+	LOG_INFO << "Speed set to: " << speed << "Hz";
+	break;
+      case 'p':
+	port = strtol(optarg, NULL, 10);
+	LOG_INFO << "Port set to: " << port;
+	break;
+      case 'd':
+	plog::get()->setMaxSeverity(strtol(optarg, NULL, 10);
+	LOG_INFO << "Debug level set to: " << strtol(optarg, NULL, 10);
+	break;
+      default:
+	usage(argv[0]);
+      }
+  }
 
   char spiDev[] = "/dev/spidev1.0";
   spi_fd = init_spidev(spiDev, spi_speed_hz);

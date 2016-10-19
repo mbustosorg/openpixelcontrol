@@ -24,11 +24,20 @@ specific language governing permissions and limitations under the License. */
 #include <GL/glut.h>
 #endif
 
+#include <sys/time.h>
+#include <sys/types.h>
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
 #include "cJSON.h"
 #include "opc.h"
 
 opc_source source = -1;
 int verbose = 0;
+
+auto start = std::chrono::high_resolution_clock::now();
+long frameCount = 0;
+#define FRAME_COUNT_INTERVAL_OUT (36000)
+#define FRAME_RATE_INTERVAL_OUT (100)
 
 // Camera parameters
 #define FOV_DEGREES 20
@@ -113,7 +122,7 @@ vector cross(vector v, vector w) {
 
 // Shapes
 typedef struct shape {
-  void (*draw)(struct shape* this, GLUquadric* quad);
+  void (*draw)(struct shape* thisShape, GLUquadric* quad);
   int index;
   union {
     vector point;
@@ -125,19 +134,19 @@ typedef struct shape {
 int num_shapes = 0;
 shape shapes[MAX_SHAPES];
 
-void draw_point(shape* this, GLUquadric* quad) {
-  pixel p = pixels[this->index];
+void draw_point(shape* thisShape, GLUquadric* quad) {
+  pixel p = pixels[thisShape->index];
   glColor3d(xfer[p.r].r, xfer[p.g].g, xfer[p.b].b);
   glPushMatrix();
-  glTranslatef(this->g.point.x, this->g.point.y, this->g.point.z);
+  glTranslatef(thisShape->g.point.x, thisShape->g.point.y, thisShape->g.point.z);
   gluSphere(quad, SHAPE_THICKNESS/2, 6, 3);
   glPopMatrix();
 }
 
-void draw_line(shape* this, GLUquadric* quad) {
-  pixel p = pixels[this->index];
-  vector start = this->g.line.start;
-  vector delta = subtract(this->g.line.end, this->g.line.start);
+void draw_line(shape* thisShape, GLUquadric* quad) {
+  pixel p = pixels[thisShape->index];
+  vector start = thisShape->g.line.start;
+  vector delta = subtract(thisShape->g.line.end, thisShape->g.line.start);
   vector z = {0, 0, 1};
   vector hinge = cross(z, delta);
   double len = length(delta);
@@ -248,6 +257,15 @@ void keyboard(unsigned char key, int x, int y) {
 void handler(u8 channel, u16 count, pixel* p) {
   int i = 0, j = 0;
 
+  frameCount++;
+  if (frameCount % FRAME_RATE_INTERVAL_OUT == 0) {
+    auto lastStart = start;
+    start = std::chrono::high_resolution_clock::now();
+    auto elapsed = start - lastStart;
+    long long updateLength = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+    LOG_INFO << "Average Frame Time: " << updateLength / 1000.0 / FRAME_RATE_INTERVAL_OUT << " ms";
+  }
+
   if (verbose) {
     char* sep = " =";
     printf("-> channel %d: %d pixel%s", channel, count, count == 1 ? "" : "s");
@@ -304,9 +322,9 @@ char* read_file(char* filename) {
   char* buffer;
 
   if (stat(filename, &st) != 0) {
-	  return NULL;
+      return NULL;
   }
-  buffer = malloc(st.st_size + 1);
+  buffer = (char *)malloc(st.st_size + 1);
   fp = fopen(filename, "r");
   fread(buffer, st.st_size, 1, fp);
   fclose(fp);
@@ -399,7 +417,12 @@ void usage(char* prog_name) {
 }
 
 int main(int argc, char** argv) {
-  u16 port;
+
+  static plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+  plog::init(plog::info, &consoleAppender);
+  LOG_INFO << "Starting Log";
+
+  u16 port = 0;
 
   glutInit(&argc, argv);
 

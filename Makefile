@@ -34,6 +34,6 @@ bin/lpd8806_server: src/lpd8806_server.c src/opc_server.c src/spi.c
 	mkdir -p bin
 	gcc ${CFLAGS} -o $@ $^
 
-bin/gl_server: src/gl_server.c src/opc_server.c src/cJSON.c
+bin/gl_server: src/gl_server.cpp src/opc_server.cpp src/cJSON.c
 	mkdir -p bin
-	gcc ${CFLAGS} -o $@ $^ $(GL_OPTS)
+	g++ ${CFLAGS} -o $@ $^ $(GL_OPTS)

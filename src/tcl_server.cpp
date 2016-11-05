@@ -77,7 +77,7 @@ void handler(u8 address, u16 count, pixel* pixels) {
   }
   if (frameCount % FRAME_RATE_INTERVAL_OUT == 0) {
     auto lastStart = start;
-    start = std::chrono::high_resolution_clock::now()
+    start = std::chrono::high_resolution_clock::now();
     auto elapsed = start - lastStart;
     long long updateLength = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
     LOG_DEBUG << "Average Frame Time: " << updateLength / FRAME_RATE_INTERVAL_OUT;
@@ -99,8 +99,10 @@ int main(int argc, char** argv) {
   LOG_INFO << "Logging to -> " << logFileName;
 
   u16 port = OPC_DEFAULT_PORT;
+  u32 speed = SPI_DEFAULT_SPEED_HZ;
   pixel diagnostic_pixel;
   time_t t;
+  int opt;
 
   while ((opt = getopt(argc, argv, ":s:p:d:")) != -1)
   {
@@ -115,7 +117,7 @@ int main(int argc, char** argv) {
 	LOG_INFO << "Port set to: " << port;
 	break;
       case 'd':
-	plog::get()->setMaxSeverity(strtol(optarg, NULL, 10);
+	plog::get()->setMaxSeverity(strtol(optarg, NULL, 10));
 	LOG_INFO << "Debug level set to: " << strtol(optarg, NULL, 10);
 	break;
       default:

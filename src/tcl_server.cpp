@@ -30,7 +30,7 @@ const char* logFileName = "logs/tcl_server.log";
 static int frameCount = 0;
 auto start = chrono::high_resolution_clock::now();
 #define FRAME_COUNT_INTERVAL_OUT (36000)
-#define FRAME_RATE_INTERVAL_OUT (100)
+#define FRAME_RATE_INTERVAL_OUT (1000)
 
 void tcl_put_pixels(int fd, u8 spi_data_tx[], u16 count, pixel* pixels) {
   int i;

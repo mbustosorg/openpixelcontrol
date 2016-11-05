@@ -17,6 +17,8 @@ specific language governing permissions and limitations under the License. */
 #include <sys/types.h>
 #include <unistd.h>
 #include <math.h>
+#include <ctime>
+#include <chrono>
 
 static int spi_fd = -1;
 static u8 spi_data_tx[((1 << 16) / 3) * 4 + 5];

@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
 	LOG_INFO << "Port set to: " << port;
 	break;
       case 'd':
-	plog::get()->setMaxSeverity(strtol(optarg, NULL, 10));
+	plog::get()->setMaxSeverity((plog::Severity) strtol(optarg, NULL, 10));
 	LOG_INFO << "Debug level set to: " << strtol(optarg, NULL, 10);
 	break;
       default:
@@ -132,7 +132,6 @@ int main(int argc, char** argv) {
   }
 
   /* set gamma correction */
-  int opt = 0;
   float gammaValue = 1.0;
   while ((opt = getopt(argc, argv, "g:")) != -1) {
     switch (opt) {

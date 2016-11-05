@@ -86,7 +86,7 @@ void handler(u8 address, u16 count, pixel* pixels) {
 }
 
 void usage(char* prog_name) {
-  fprintf(stderr, "Usage: %s <options> -s [<speed in Hz>] -p [<port>] -d[<debug level (4 = info)>]\n", prog_name);
+  fprintf(stderr, "Usage: %s <options> -g [<gamma correction>] -s [<speed in Hz>] -p [<port>] -d[<debug level (4 = info)>]\n", prog_name);
   exit(1);
 }
 
@@ -103,8 +103,9 @@ int main(int argc, char** argv) {
   pixel diagnostic_pixel;
   time_t t;
   int opt;
+  float gammaValue = 1.0;
 
-  while ((opt = getopt(argc, argv, ":s:p:d:")) != -1)
+  while ((opt = getopt(argc, argv, ":s:p:d:g:")) != -1)
   {
       switch (opt)
       {
@@ -120,6 +121,9 @@ int main(int argc, char** argv) {
 	plog::get()->setMaxSeverity((plog::Severity) strtol(optarg, NULL, 10));
 	LOG_INFO << "Debug level set to: " << strtol(optarg, NULL, 10);
 	break;
+      case 'g':
+	gammaValue = atof(optarg);
+	break;
       default:
 	usage(argv[0]);
       }
@@ -131,15 +135,6 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  /* set gamma correction */
-  float gammaValue = 1.0;
-  while ((opt = getopt(argc, argv, "g:")) != -1) {
-    switch (opt) {
-    case 'g':
-      gammaValue = atof(optarg);
-      break;
-    }
-  }
   LOG_INFO << "Gamma correction factor: " << gammaValue;
   set_gamma(gammaValue, gammaValue, gammaValue);
   

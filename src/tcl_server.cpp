@@ -30,7 +30,7 @@ static u8 gamma_table_blue[256];
 
 const char* logFileName = "logs/tcl_server.log";
 static int frameCount = 0;
-auto start = chrono::high_resolution_clock::now();
+auto start = std::chrono::high_resolution_clock::now();
 #define FRAME_COUNT_INTERVAL_OUT (36000)
 #define FRAME_RATE_INTERVAL_OUT (1000)
 
@@ -77,9 +77,9 @@ void handler(u8 address, u16 count, pixel* pixels) {
   }
   if (frameCount % FRAME_RATE_INTERVAL_OUT == 0) {
     auto lastStart = start;
-    start = chrono::high_resolution_clock::now()
+    start = std::chrono::high_resolution_clock::now()
     auto elapsed = start - lastStart;
-    long long updateLength = chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+    long long updateLength = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
     LOG_DEBUG << "Average Frame Time: " << updateLength / FRAME_RATE_INTERVAL_OUT;
   }
   tcl_put_pixels(spi_fd, spi_data_tx, count, pixels);

@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
   LOG_INFO << "SPI speed: " << spi_speed_hz*1e-6 << " MHz, ready...";
   opc_source s = opc_new_source(port);
   while (s >= 0) {
-    u8 timeout = opc_receive(s, handler, 100000);
+    u8 timeout = opc_receive(s, handler, 200000);
     if (timeout == 0) {
       LOG_INFO << "Timeout, no recent data";
     }

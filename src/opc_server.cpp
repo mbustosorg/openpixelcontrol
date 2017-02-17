@@ -114,7 +114,7 @@ u8 opc_receive(opc_source source, opc_handler* handler, u32 timeout_ms) {
     info->sock = accept(
         info->listen_sock, (struct sockaddr*) &(address), &address_len);
     inet_ntop(AF_INET, &(address.sin_addr), buffer, 64);
-    LOG_INFO << "OPC: Client connected from " << buffer;
+    LOG_INFO << "OPC: Client connected from " << buffer << ":" << address.sin_port;
     close(info->listen_sock);
     info->listen_sock = -1;
     info->header_length = 0;
